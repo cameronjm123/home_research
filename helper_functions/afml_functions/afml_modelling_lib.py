@@ -27,36 +27,30 @@ def get_train_times(t1, testTimes):
     return trn
 
 
-class PurgedKFold(
-    KFold):  # this id called a generator class, we will generate the class BaseKFold with the adaptions written in the generator functions in the PurgedKFold generator function
-    def __init__(self, n_splits=3, t1=None, pctEmbargo=0.):
+class PurgedKFold(KFold):
+    def __init__(self, n_splits=3, t1=None, pct_embargo=0., shuffle=False, random_state=42):
         if not isinstance(t1, type(pd.Series())):
             raise ValueError('Label through dates must be a pd.Series')
-        super().__init__(n_splits, shuffle=False,
-                         random_state=None)  # here we initiate the base class which is the standard sklearn k-fold cross validator
+        super().__init__(n_splits, shuffle=shuffle, random_state=random_state)
         self.t1 = t1
-        self.pctEmbargo = pctEmbargo
+        self.pct_embargo = pct_embargo
 
     def split(self, X, y=None, groups=None):
+        if not self.t1:
+            return super().split(X, y)
         if (X.index == self.t1.index).sum() != len(self.t1):
-            raise ValueError(
-                'X and ThruDateValues must have the same index')  # just checking that our t1 labels is the same as our datasupplie in X
+            raise ValueError('X and ThruDateValues must have the same index')
         indices = np.arange(X.shape[0])
-        mbrg = int(X.shape[
-                       0] * self.pctEmbargo)  # this is the number of indices we will skip after the test set as a resdult of the embargo
+        mbrg = int(X.shape[0] * self.pct_embargo)
         test_starts = [(i[0], i[-1] + 1) for i in np.array_split(np.arange(X.shape[0]), self.n_splits)]
         for i, j in test_starts:
             t0 = self.t1.index[i]  # represent the label indices THESE ARE TIME INDICES
-            test_indices = indices[
-                           i:j]  # this is defined by the iteration of start and ends we are on THESE ARE INTEGER INDICES
+            test_indices = indices[i:j]
             # the searchsorted function will return the integer indices, not the time indices
-            maxT1Idx = self.t1.index.searchsorted(self.t1[
-                                                      test_indices].max())  # we obtain the index of the first time after the latest time within the test set
-            train_indices = self.t1.index.searchsorted(self.t1[
-                                                           self.t1 <= t0].index)  # PURGING (left of test set) - this gets all the indices that occur where the label end time is before the label start times of the test set
+            maxT1Idx = self.t1.index.searchsorted(self.t1[test_indices].max())
+            train_indices = self.t1.index.searchsorted(self.t1[self.t1 <= t0].index)
             if maxT1Idx < X.shape[0]:  # check if the test set isn't at the end of the data
-                train_indices = np.concatenate((train_indices, indices[
-                                                               maxT1Idx + mbrg:]))  # EMBARGO (right of test set) - concatenates the integer train indices to the left of the test set with the integer, embargoed train indices to right of test set
+                train_indices = np.concatenate((train_indices, indices[maxT1Idx + mbrg:]))
             yield train_indices, test_indices
             '''
             yield is used in generator functions to 'save' the state of a function for future use, the k-fold cross validator will essentially 'save' this state of the test and train sets
