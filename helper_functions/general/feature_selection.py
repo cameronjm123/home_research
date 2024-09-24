@@ -195,13 +195,16 @@ def feature_importance_mdi_pmf_with_rf(X, y, test_size=0.3, target_type='continu
 
     # Train the model
     fitter.fit(X_train, y_train)
+    print('completed training')
 
     # Calculate feature importance using Mean Decrease in Impurity (MDI)
     mdi_importances = fitter.feature_importances_
+    print('obtained MDI feature importances')
 
     # Calculate feature importance using Permutation Feature Importance (PFI)
     pfi_result = permutation_importance(fitter, X_test, y_test, n_repeats=10, random_state=42)
     pfi_importances = pfi_result.importances_mean
+    print('obtained PFI feature importances')
 
     # Create a DataFrame to display the results side by side
     importance_df = pd.DataFrame({
@@ -227,13 +230,12 @@ def feature_importance_mdi_pmf_with_rf(X, y, test_size=0.3, target_type='continu
     return importance_df
 
 
-def create_pipeline_with_scaler_and_pca(explained_variance, X):
+def create_pipeline_with_scaler_and_pca(explained_variance):
     """
     Creates a pipeline with StandardScaler and PCA, and returns the breakdown of original features into each component.
 
     Parameters:
     explained_variance (float): The amount of variance that PCA should retain (a value between 0 and 1).
-    X (pd.DataFrame): The original dataset (before scaling).
 
     Returns:
     pipeline: A scikit-learn pipeline with StandardScaler and PCA.
@@ -250,7 +252,7 @@ def create_pipeline_with_scaler_and_pca(explained_variance, X):
         ('pca', PCA(n_components=explained_variance))  # Step 2: Apply PCA with explained variance
     ])
 
-    return pipeline.fit(X)
+    return pipeline
 
 
 def get_pca_components(pipeline, X, feature_names=None):
