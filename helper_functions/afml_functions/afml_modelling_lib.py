@@ -387,7 +387,7 @@ def quantile_encode_series(series: pd.Series, q: int = 10):
     Returns:
     pd.Series of encoded characters
     """
-    return pd.cut(series, bins=q, labels=ENCODING_CHARS[:q])
+    return pd.cut(series, bins=q, labels=ENCODING_CHARS[:q]).astype(str)
 
 
 def shannon_entropy(encoded_series: pd.Series, sequence_length: int):
@@ -412,9 +412,14 @@ def shannon_entropy(encoded_series: pd.Series, sequence_length: int):
     for i in range(sequence_length, len(encoded_series)):
         sequence = encoded_series[i-sequence_length:i]
         if sequence in pmf:
-            pmf[sequence] = 1
-        else:
             pmf[sequence] += 1
-    num_sequences = len(pmf)
+        else:
+            pmf[sequence] = 1
+    num_sequences = len(encoded_series) - sequence_length
     pmf = np.array([pmf[seq]/num_sequences for seq in pmf.keys()])
+    print(pmf)
     return -sum(pmf * np.log2(pmf))
+
+
+def encode_and_entropy(series: pd.Series, sequence_length: int, q: int):
+    return shannon_entropy(quantile_encode_series(series, q), sequence_length)
