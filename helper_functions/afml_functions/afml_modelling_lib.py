@@ -390,6 +390,9 @@ def quantile_encode_series(series: pd.Series, q: int = 10):
     return pd.cut(series, bins=q, labels=ENCODING_CHARS[:q]).astype(str)
 
 
+# same thing is also calculated in pyinfo.block_entropy.block_entropy
+# we can also examine local entropy which is just the entropy of eac point before taking the sum across all i
+# (remember we have a probability of all L length sequences in the k length series)
 def shannon_entropy(encoded_series: pd.Series, sequence_length: int):
     """
     Calculates the probability mass function for an encoded series, for sequences of length sequence_length.
@@ -417,7 +420,6 @@ def shannon_entropy(encoded_series: pd.Series, sequence_length: int):
             pmf[sequence] = 1
     num_sequences = len(encoded_series) - sequence_length
     pmf = np.array([pmf[seq]/num_sequences for seq in pmf.keys()])
-    print(pmf)
     return -sum(pmf * np.log2(pmf))
 
 
