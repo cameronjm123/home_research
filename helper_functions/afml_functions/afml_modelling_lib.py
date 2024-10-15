@@ -6,6 +6,7 @@ from sklearn.pipeline import Pipeline
 import matplotlib.pyplot as plt
 from itertools import product
 from scipy.stats import rv_continuous
+import string
 
 '''
 Chpt 7: Cross Validation
@@ -369,3 +370,51 @@ class LogUniformGen(rv_continuous):  # inherited from scipy
 
 def log_uniform(a=1, b=np.exp(1)):
     return LogUniformGen(a=a, b=b, name='logUniform')
+
+
+ENCODING_CHARS = list(string.printable)
+
+
+def quantile_encode_series(series: pd.Series, q: int = 10):
+    """
+    Encodes the series such that it is labelled with each quantile.
+    This is currently only supported for q <= 100 (as we encode using characters available in the string module)
+
+    Args:
+    encoded_series: series of values, e.g. time series of returns
+    q: number of quantiles to be used for encoding
+
+    Returns:
+    pd.Series of encoded characters
+    """
+    return pd.cut(series, bins=q, labels=ENCODING_CHARS[:q])
+
+
+def shannon_entropy(encoded_series: pd.Series, sequence_length: int):
+    """
+    Calculates the probability mass function for an encoded series, for sequences of length sequence_length.
+    Then calculates the single entropy value for the encoded series.
+    This should be used in conjunction with pandas rolling where we seek to find a series of entropy values across
+    a rolling window.
+
+    Args:
+    encoded_series: series of encoded values, there should be a fixed number of unique encodings, e.g. 2 (binary) or
+                    m (m-quantile). Encodings should be chars/strings.
+    sequence_length: integer value L for the length of the sequence examined for our pmf. There could be a total of
+                        M^L possible sequences (pick L from M distinct possibilities)
+
+    Returns:
+    estimated Shannon entropy
+    """
+    pmf = {}
+    # must turn encodings into string
+    encoded_series = "".join(encoded_series)
+    for i in range(sequence_length, len(encoded_series)):
+        sequence = encoded_series[i-sequence_length:i]
+        if sequence in pmf:
+            pmf[sequence] = 1
+        else:
+            pmf[sequence] += 1
+    num_sequences = len(pmf)
+    pmf = np.array([pmf[seq]/num_sequences for seq in pmf.keys()])
+    return -sum(pmf * np.log2(pmf))
