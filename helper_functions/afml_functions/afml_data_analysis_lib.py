@@ -330,18 +330,15 @@ def frac_diff_ffd(series, d, thres=1e-5):
     return df
 
 
-def plot_min_ffd(series, thres=1e-2):
+def plot_min_ffd(series, column_of_interest, thres=1e-2):
     from statsmodels.tsa.stattools import adfuller
     out = pd.DataFrame(columns=['adfStat', 'pVal', 'lags', 'nObs', '95% conf', 'corr'])
     for d in np.linspace(0, 1, 11):
-        df1 = np.log(series[['close']]).resample(
-            '1D').last()  # resamples series to daily instead of whatever it was before and uses log prices
-        df1 = np.log(series[['close']])
-        df1 = series[['close']]
+        df1 = np.log(series[[column_of_interest]])
         df2 = frac_diff_ffd(df1, d, thres)  # our new fractionally differentiated series using fixed window method
-        corr = np.corrcoef(df1.loc[df2.index, 'close'], df2['close'])[
+        corr = np.corrcoef(df1.loc[df2.index, column_of_interest], df2[column_of_interest])[
             0, 1]  # correlation between differenced series and original series - we want this to be high as this indicates the series are similar with regards to information, therefore we have not lost a lot of memory for high correlation coefficients
-        df2 = adfuller(df2['close'], maxlag=1, regression='c', autolag=None)
+        df2 = adfuller(df2[column_of_interest], maxlag=1, regression='c', autolag=None)
         print(df2)
         out.loc[d] = list(df2[:4]) + [df2[4]['5%']] + [
             corr]  # just takes returns from adfuller function and puts into nice list
