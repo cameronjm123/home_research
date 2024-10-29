@@ -87,7 +87,7 @@ def cv_score(clf, X, y, sample_weight, scoring='neg_log_loss', t1=None, cv=None,
         raise Exception('wrong scoring method.')
     from sklearn.metrics import log_loss, accuracy_score
     if cvGen is None:
-        cvGen = PurgedKFold(n_splits=cv, t1=t1, pctEmbargo=pctEmbargo)  # purged class created
+        cvGen = PurgedKFold(n_splits=cv, t1=t1, pct_embargo=pctEmbargo)  # purged class created
     score = []
     for train, test in cvGen.split(
             X=X):  # the split function will return a new train and test set each time it cycles through the function (remember it saves its progress in the loop each time it loops)
@@ -123,7 +123,7 @@ def feat_imp_mda(clf, X, y, cv, sample_weight, t1, pctEmbargo, scoring='neg_log_
     if scoring not in ['neg_log_loss', 'accuracy']:
         raise Exception('wrong scoring method.')
     from sklearn.metrics import log_loss, accuracy_score
-    cvGen = PurgedKFold(n_splits=cv, t1=t1, pctEmbargo=pctEmbargo)  # purged class created
+    cvGen = PurgedKFold(n_splits=cv, t1=t1, pct_embargo=pctEmbargo)  # purged class created
     scr0, scr1 = pd.Series(), pd.DataFrame(columns=X.columns)  # score for k fold, score for feat imp
     for i, (train, test) in enumerate(cvGen.split(
             X=X)):  # the split function will return a new train and test set each time it cycles through the function (remember it saves its progress in the loop each time it loops)
@@ -220,7 +220,7 @@ def feat_importance(trnsX, cont, n_estimators=1000, cv=10, max_samples=1., numTh
         from sklearn.ensemble import BaggingClassifier
         clf = DecisionTreeClassifier(criterion='entropy', max_features=int(1), class_weight='balanced',
                                      min_weight_fraction_leaf=minWLeaf)
-        clf = BaggingClassifier(base_estimator=clf, n_estimators=n_estimators, max_features=1., max_samples=max_samples,
+        clf = BaggingClassifier(estimator=clf, n_estimators=n_estimators, max_features=1., max_samples=max_samples,
                                 oob_score=True, n_jobs=n_jobs)
     else:
         from sklearn.ensemble import RandomForestClassifier
@@ -232,13 +232,13 @@ def feat_importance(trnsX, cont, n_estimators=1000, cv=10, max_samples=1., numTh
     oos = None
     if method == 'MDI':
         imp = feat_imp_mdi(fit, featNames=trnsX.columns)
-        oos = cv_score(clf, X=trnsX, y=cont['bin'], cv=cv, sample_weight=cont['w'], t1=cont['t1'], pctEmbargo=pctEmbargo,
+        oos = cv_score(clf, X=trnsX, y=cont['bin'], cv=cv, sample_weight=cont['w'], t1=cont['t1'], pct_embargo=pctEmbargo,
                        scoring=scoring).mean()
     elif method == 'MDA':
         imp, oos = feat_imp_mda(clf, X=trnsX, y=cont['bin'], cv=cv, sample_weight=cont['w'], t1=cont['t1'],
-                                pctEmbargo=pctEmbargo, scoring=scoring)
+                                pct_embargo=pctEmbargo, scoring=scoring)
     elif method == 'SFI':
-        cvGen = PurgedKFold(n_splits=cv, t1=cont['t1'], pctEmbargo=pctEmbargo)
+        cvGen = PurgedKFold(n_splits=cv, t1=cont['t1'], pct_embargo=pctEmbargo)
         oos = cv_score(clf, X=trnsX, y=cont['bin'], sample_weight=cont['w'], scoring=scoring, cvGen=cvGen).mean()
         clf.n_jobs = 1
         # bring back below when this is implemented in later chapters
@@ -298,7 +298,7 @@ def parallelized_feat_imp(datasets, n_estimators=1000, cv=10, max_samples=1., nu
     stdsqd_imp = pd.DataFrame(index=list(range(len(datasets))), columns=datasets[0][0].columns)
     for i in range(len(datasets)):
         imp, oob, oos = feat_importance(datasets[i][0], datasets[i][1], n_estimators=n_estimators, cv=cv,
-                                        max_samples=max_samples, numThreads=numThreads, pctEmbargo=pctEmbargo,
+                                        max_samples=max_samples, numThreads=numThreads, pct_embargo=pctEmbargo,
                                         scoring=scoring, method=method, minWLeaf=minWLeaf, fitter=fitter)
         mean_imp.iloc[i] = imp['mean']
         stdsqd_imp.iloc[i] = imp['std'] ** 2
@@ -340,7 +340,7 @@ def clf_hyper_fit(feat, lbl, t1, pipe_clf, param_grid, cv=3, bagging=[0, None, 1
     else:
         scoring = 'neg_log_loss'
     # hyperparameter search on train data
-    inner_cv = PurgedKFold(n_splits=cv, t1=t1, pctEmbargo=pctEmbargo)
+    inner_cv = PurgedKFold(n_splits=cv, t1=t1, pct_embargo=pctEmbargo)
     if rndSearchIter == 0:
         # ordinary grid search no randomness
         gs = GridSearchCV(estimator=pipe_clf, param_grid=param_grid, scoring=scoring, cv=inner_cv, n_jobs=n_jobs)

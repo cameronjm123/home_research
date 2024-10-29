@@ -37,10 +37,6 @@ class NearestNeighbourFeature:
         _, neighbours = nn.kneighbors(feature_pivot, return_distance=True)
 
         feature_values_neighbours = np.zeros((n_neighbours_max, *feature_pivot.shape))
-
-        print('shape should be (neighbours, classes, samples) : ', feature_values_neighbours.shape)
-        print('feature_pivot shape:', feature_pivot.shape)
-        print('neighbours shape:', neighbours.shape)
         for i in range(n_neighbours_max):
             # assigns the values (all sample points) of the ith nearest neighbour for each class
             feature_values_neighbours[i, :, :] += feature_pivot.values[neighbours[:, i], :]
@@ -76,7 +72,7 @@ class NearestNeighbourFeature:
 
         feature_df = pivot_aggs.unstack().reset_index()
         feature_df.columns = [self.sample_index_name, self.class_label_name, f'{self.feature_name}_NearestNeighbours_{num_neighbours_include}_{aggregate_function.__name__}']
-        return feature_df
+        return feature_df.set_index([self.sample_index_name, self.class_label_name])
 
 
 class ClusterFeature:
@@ -109,11 +105,12 @@ class ClusterFeature:
 
         feature_pivot['cluster'] = clusters
         self.feature_pivot = feature_pivot
-        self.columns = list(feature_pivot.columns)
+        self.columns = list(feature_pivot.drop('cluster', axis=1).columns)
         self.index = list(feature_pivot.index)
         self.class_label_name = class_label_name
         self.sample_index_name = sample_index_name
         self.feature_name = feature_name
+        self.clusters = clusters
 
     def create_cluster_feature(
             self,
@@ -131,8 +128,11 @@ class ClusterFeature:
         )
         agg_by_cluster = self.feature_pivot.groupby('cluster').apply(aggregate_function)
         for i in self.index:  # the class names
-            pivot_aggs.loc[i] = agg_by_cluster.loc[pivot_aggs.loc[i]['cluster']]
+            pivot_aggs.loc[i] = agg_by_cluster.loc[self.feature_pivot.loc[i]['cluster']]
 
         feature_df = pivot_aggs.unstack().reset_index()
         feature_df.columns = [self.sample_index_name, self.class_label_name, f'{self.feature_name}_Cluster_{aggregate_function.__name__}']
-        return feature_df
+        return feature_df.set_index([self.class_label_name, self.sample_index_name])
+
+    def get_clusters(self):
+        return self.clusters
