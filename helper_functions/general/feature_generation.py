@@ -4,6 +4,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.cluster import KMeans
 from sklearn.neighbors import NearestNeighbors
 
+
 class NearestNeighbourFeature(BaseEstimator, TransformerMixin):
     '''
     Inspired by 1st place Kaggle winner for Optiver Volatility Prediction.
