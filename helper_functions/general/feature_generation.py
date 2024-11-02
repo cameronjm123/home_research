@@ -71,7 +71,9 @@ class NearestNeighbourFeature(BaseEstimator, TransformerMixin):
 
         feature_df = pivot_aggs.unstack().reset_index()
         feature_df.columns = [self.sample_index_name, self.class_label_name, f'{self.feature_name}_NearestNeighbours_{self.num_neighbours_include_in_agg}_{self.aggregate_function.__name__}']
-        return X.set_index([self.sample_index_name, self.class_label_name]).join(feature_df).reset_index()
+        X_ind = X.set_index([self.sample_index_name, self.class_label_name])
+        feature_df = feature_df.set_index([self.sample_index_name, self.class_label_name]).loc[X_ind.index]
+        return X_ind.join(feature_df).reset_index()
 
 
 class ClusterFeature:
@@ -127,5 +129,6 @@ class ClusterFeature:
 
         feature_df = pivot_aggs.unstack().reset_index()
         feature_df.columns = [self.sample_index_name, self.class_label_name, f'{self.feature_name}_Cluster_{self.aggregate_function.__name__}']
-        feature_df = feature_df.set_index([self.class_label_name, self.sample_index_name])
-        return X.set_index([self.sample_index_name, self.class_label_name]).join(feature_df).reset_index()
+        X_ind = X.set_index([self.sample_index_name, self.class_label_name])
+        feature_df = feature_df.set_index([self.sample_index_name, self.class_label_name]).loc[X_ind.index]
+        return X_ind.join(feature_df).reset_index()
