@@ -404,7 +404,7 @@ def shannon_entropy(encoded_series: pd.Series, sequence_length: int):
     encoded_series: series of encoded values, there should be a fixed number of unique encodings, e.g. 2 (binary) or
                     m (m-quantile). Encodings should be chars/strings.
     sequence_length: integer value L for the length of the sequence examined for our pmf. There could be a total of
-                        M^L possible sequences (pick L from M distinct possibilities)
+                        M^L possible sequences (pick L from M distinct possibilities), M represents the encoding.
 
     Returns:
     estimated Shannon entropy
