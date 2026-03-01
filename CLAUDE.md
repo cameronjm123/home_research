@@ -27,6 +27,16 @@ jupyter notebook
 - `fx_usdsek_projext.ipynb` — FX price modelling with fractional differentiation and rolling features
 - `RL-Cartpole/` — DQN reinforcement learning on CartPole (modular: `Algo.py`, `Env.py`, `Model.py`, `Replay.py`)
 
+## Git / SSH
+
+`HOME` is set to the `dev/` folder (via `.bashrc`), so SSH looks for keys in `~/OneDrive/Documents/dev/.ssh/` rather than the real user profile. An SSH config at `~/OneDrive/Documents/dev/.ssh/config` redirects this to the actual key and known_hosts:
+
+```
+Host *
+  IdentityFile /c/Users/camer/.ssh/id_ed25519
+  UserKnownHostsFile /c/Users/camer/.ssh/known_hosts
+```
+
 ## Stack
 
 numpy, pandas, scikit-learn, statsmodels, scipy, matplotlib, seaborn, torch, gym
